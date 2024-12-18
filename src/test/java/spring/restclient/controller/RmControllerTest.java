@@ -20,99 +20,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 @AutoConfigureMockRestServiceServer
 class RmControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
+	 @Autowired
+	 private MockMvc mockMvc;
 
-    @Autowired
-    private MockRestServiceServer mockServer;
+	 @Autowired
+	 private MockRestServiceServer mockServer;
 
-    @Test
-    void getCharacters() throws Exception {
-        // Mock response from the external API
-        mockServer.expect(requestTo("https://rickandmortyapi.com/api/character"))
-            .andRespond(withSuccess(
-                """
-												{
-														"results": [
-																{
-																		"id": 1,
-																		"name": "Rick Sanchez",
-																		"status": "Alive",
-																		"species": "Human"
-																},
-																{
-																		"id": 2,
-																		"name": "Morty Smith",
-																		"status": "Alive",
-																		"species": "Human"
-																}
-														]
-												}
-												""", MediaType.APPLICATION_JSON
-                                   ));
-
-        // Perform GET request to the "/api/characters" endpoint
-        mockMvc.perform(get("/api/characters")) // Path should start with "/"
-            .andExpect(status().isOk())
-            .andExpect(content().json(
-                """
-												[
-														{
-																"id": 1,
-																"name": "Rick Sanchez",
-																"status": "Alive",
-																"species": "Human"
-														},
-														{
-																"id": 2,
-																"name": "Morty Smith",
-																"status": "Alive",
-																"species": "Human"
-														}
-												]
-												"""
-                                     ));
-
-        // Verify that the mock server was used
-        mockServer.verify();
-    }
-
-    @Test
-    void getCharacterById() throws Exception {
-			 // Mock response from the external API
-			 mockServer.expect(requestTo("https://rickandmortyapi.com/api/character/1"))
-					 .andRespond(withSuccess(
-							 """
-									{
-										"id": 1,
-										"name": "Rick Sanchez",
-										"species": "Human",
-										"status": "Alive"
-									}
-									""", MediaType.APPLICATION_JSON
-				));
-
-			 // Perform GET request to the "/api/characters/1" endpoint
-			 mockMvc.perform(get("/api/characters/1"))
-					 .andExpect(status().isOk())
-					 .andExpect(content().json(
-							 """
-														{
-															 "id": 1,
-															 "name": "Rick Sanchez",
-															 "species": "Human",
-															 "status": "Alive"
-														}
-														"""
-						));
-			 // Verify that the mock server was used
-			 mockServer.verify();
-    }
-
+	 /**
+		* Test: Fetch all characters.
+		* Verifies that the `/api/characters` endpoint returns all characters as expected.
+		*/
 	 @Test
-	 void getSpeciesStatistic() throws Exception {
-			// Given: Mock response from the external API for status "alive"
-			mockServer.expect(requestTo("https://rickandmortyapi.com/api/character?status=alive"))
+	 void getCharacters() throws Exception {
+			// Mock API response
+			mockServer.expect(requestTo("https://rickandmortyapi.com/api/character"))
 					.andRespond(withSuccess(
 							"""
 											{
@@ -128,29 +49,121 @@ class RmControllerTest {
 																	"name": "Morty Smith",
 																	"status": "Alive",
 																	"species": "Human"
-															},
-															{
-																	"id": 3,
-																	"name": "Birdperson",
-																	"status": "Alive",
-																	"species": "Birdperson"
 															}
 													]
 											}
 											""", MediaType.APPLICATION_JSON
 																 ));
 
-			// When: Performing GET request to "/api/characters/species-statistic"
+			// Perform GET request to the endpoint
+			mockMvc.perform(get("/api/characters"))
+					.andExpect(status().isOk())
+					.andExpect(content().json(
+							"""
+											[
+													{
+															"id": 1,
+															"name": "Rick Sanchez",
+															"status": "Alive",
+															"species": "Human"
+													},
+													{
+															"id": 2,
+															"name": "Morty Smith",
+															"status": "Alive",
+															"species": "Human"
+													}
+											]
+											"""
+																	 ));
+
+			// Verify interaction with mock server
+			mockServer.verify();
+	 }
+
+	 /**
+		* Test: Fetch a single character by ID.
+		* Verifies that the `/api/characters/{id}` endpoint returns the correct character.
+		*/
+	 @Test
+	 void getCharacterById() throws Exception {
+			// Mock API response
+			mockServer.expect(requestTo("https://rickandmortyapi.com/api/character/1"))
+					.andRespond(withSuccess(
+							"""
+											{
+													"id": 1,
+													"name": "Rick Sanchez",
+													"species": "Human",
+													"status": "Alive"
+											}
+											""", MediaType.APPLICATION_JSON
+																 ));
+
+			// Perform GET request to the endpoint
+			mockMvc.perform(get("/api/characters/1"))
+					.andExpect(status().isOk())
+					.andExpect(content().json(
+							"""
+											{
+													"id": 1,
+													"name": "Rick Sanchez",
+													"species": "Human",
+													"status": "Alive"
+											}
+											"""
+																	 ));
+
+			// Verify interaction with mock server
+			mockServer.verify();
+	 }
+
+	 /**
+		* Test: Get species statistics.
+		* Verifies that the `/api/characters/species-statistic` endpoint returns the correct count.
+		*/
+	 @Test
+	 void getSpeciesStatisticCount() throws Exception {
+			// Mock response for species "Human" and status "alive"
+			mockServer.expect(requestTo("https://rickandmortyapi.com/api/character?species=Human&status=alive"))
+					.andRespond(withSuccess(
+							"""
+											{
+													"results": [
+															{
+																	"id": 1,
+																	"name": "Rick Sanchez",
+																	"status": "Alive",
+																	"species": "Human"
+															},
+															{
+																	"id": 2,
+																	"name": "Morty Smith",
+																	"status": "Alive",
+																	"species": "Human"
+															}
+													]
+											}
+											""", MediaType.APPLICATION_JSON
+																 ));
+
+			// Perform GET request with query parameters
 			mockMvc.perform(get("/api/characters/species-statistic")
 													.param("species", "Human")
 													.param("status", "alive"))
 					.andExpect(status().isOk())
 					.andExpect(content().string("2")); // Expecting count of 2 Humans
 
-			// Then: Verify the mock server interaction
+			// Verify interaction
 			mockServer.verify();
 	 }
 
+
+
+	 /**
+		* Test: Fetch characters by species and status.
+		* Verifies that the `/api/characters` endpoint filters characters correctly.
+		*/
 	 @Test
 	 void getCharactersBySpeciesAndStatus() throws Exception {
 			// Given: Mock response from the external API for species "alien" and status "alive"
@@ -204,4 +217,94 @@ class RmControllerTest {
 			mockServer.verify();
 	 }
 
+	 @Test
+	 void getCharactersByStatus() throws Exception {
+			// Mock response for status "dead"
+			mockServer.expect(requestTo("https://rickandmortyapi.com/api/character?status=dead"))
+					.andRespond(withSuccess(
+							"""
+											{
+													"results": [
+															{
+																	"id": 8,
+																	"name": "Adjudicator Rick",
+																	"species": "Human",
+																	"status": "Dead"
+															},
+															{
+																	"id": 16,
+																	"name": "Amish Cyborg",
+																	"species": "Alien",
+																	"status": "Dead"
+															}
+													]
+											}
+											""", MediaType.APPLICATION_JSON
+																 ));
+
+			// Perform GET request with status
+			mockMvc.perform(get("/api/characters")
+													.param("status", "dead"))
+					.andExpect(status().isOk())
+					.andExpect(content().json(
+							"""
+											[
+													{
+															"id": 8,
+															"name": "Adjudicator Rick",
+															"species": "Human",
+															"status": "Dead"
+													},
+													{
+															"id": 16,
+															"name": "Amish Cyborg",
+															"species": "Alien",
+															"status": "Dead"
+													}
+											]
+											"""
+																	 ));
+
+			mockServer.verify();
+	 }
+
+	 @Test
+	 void getCharactersBySpecies() throws Exception {
+			// Mock response for species "alien"
+			mockServer.expect(requestTo("https://rickandmortyapi.com/api/character?species=alien"))
+					.andRespond(withSuccess(
+							"""
+											{
+													"results": [
+															{
+																	"id": 6,
+																	"name": "Abadango Cluster Princess",
+																	"species": "Alien",
+																	"status": "Alive"
+															}
+													]
+											}
+											""", MediaType.APPLICATION_JSON
+																 ));
+
+			// Perform GET request with species
+			mockMvc.perform(get("/api/characters")
+													.param("species", "alien"))
+					.andExpect(status().isOk())
+					.andExpect(content().json(
+							"""
+											[
+													{
+															"id": 6,
+															"name": "Abadango Cluster Princess",
+															"species": "Alien",
+															"status": "Alive"
+													}
+											]
+											"""
+																	 ));
+
+			mockServer.verify();
+	 }
 }
+
