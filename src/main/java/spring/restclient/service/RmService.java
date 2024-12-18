@@ -50,7 +50,7 @@ public class RmService {
         return response.results();
     }
 
-    // Fetch all characters by status and species
+    // Fetch all characters by status and species and return count
     public long getCountOfCharactersBySpeciesAndStatus(String species, String status) {
         String url = UriComponentsBuilder.fromPath("")
                 .queryParam("status", status)
@@ -69,6 +69,25 @@ public class RmService {
                 .filter(character -> character.species() != null)
                 .filter(character -> character.species().equalsIgnoreCase(species))
                 .count();
+    }
+
+    // Fetch all characters by status and species
+    public List<RmChar> getAllCharactersBySpeciesAndStatus(String species, String status) {
+        // Build the URL with both query parameters
+        String url = UriComponentsBuilder.fromPath("")
+            .queryParam("species", species)
+            .queryParam("status", status)
+            .build()
+            .toUriString();
+
+        // Call the external API and retrieve the results
+        RmResponse response = client
+            .get()
+            .uri(url)
+            .retrieve()
+            .body(RmResponse.class);
+
+        return response.results();
     }
 }
 
